@@ -1,0 +1,16 @@
+{
+  "name": "cowin-slots-bot",
+  "version": "1.0.0",
+  "description": "CoWin slot information bot ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Avinesh Singh <cowinslotbot@avine.sh>",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^2.6.1",
+    "sqlite3": "^5.0.2",
+    "telegraf": "^4.3.0"
+  }
+}
