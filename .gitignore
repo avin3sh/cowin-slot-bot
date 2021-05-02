@@ -1,3 +1,4 @@
 node_modules
 logs/*
 db/db.db*
+envfile
