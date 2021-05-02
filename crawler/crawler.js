@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const db = require('../db/db');
 const { tgBot } = require('../bot/bot');
 
-const CRON_INTERVAL = 60 * 60 * 1000;
+const CRON_INTERVAL = 30 * 60 * 1000;
 
 const fetchSlotDetails = (searchValue, searchClass, date) => {
   let fetchUrl = '';
