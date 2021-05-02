@@ -3,6 +3,8 @@ const { Telegraf } = require('telegraf');
 const db = require('../db/db');
 const districts = require('../assets/districts.json');
 
+const bot = new Telegraf(process.env.BOT_TOKEN);
+
 const handleOnboarding = (ctx) => {
   db.searchUserByTelegramId(ctx.chat.id)
     .then((res) => {
@@ -132,6 +134,7 @@ const handleStatusShow = (ctx) => {
           telegram_id: ${res.telegram_id},
           search criteria: ${res.search_class} - ${res.search_value},
           age criteria: ${res.age_criteria},
+          send notification: ${res.active ? 'Yes' : 'No'},
           last queried: ${res.last_queried},
           last queried status: ${res.last_queried_status},
           query failure count: ${res.query_fail_count},
@@ -146,7 +149,6 @@ const handleStatusShow = (ctx) => {
 };
 
 const botService = () => {
-  const bot = new Telegraf(process.env.BOT_TOKEN);
   bot.start((ctx) => {
     handleOnboarding(ctx);
   });
@@ -179,17 +181,40 @@ const botService = () => {
     handleStatusShow(ctx);
   });
 
-  bot.command('help', (ctx) => {
-    ctx.reply(
-      'Send /start to register yourself. Send /setPreference to learn how to set search criteria. Send /status to check vaccination query status'
-    );
+  bot.command('pause', (ctx) => {
+    db.setSubscriptionStatus({ telegramId: ctx.chat.id, status: false })
+      .then(() => {
+        ctx.reply('Your vaccination slot notification has been paused. Send /resume to restart');
+      })
+      .catch((err) => {
+        console.error(err);
+        ctx.reply('Unable to pause notification. Try again later');
+      });
   });
 
-  bot.launch();
+  bot.command('resume', (ctx) => {
+    db.setSubscriptionStatus({ telegramId: ctx.chat.id, status: true })
+      .then(() => {
+        ctx.reply('Your vaccination slot notification has been restarted. Send /pause to pause it.');
+      })
+      .catch((err) => {
+        console.error(err);
+        ctx.reply('Unable to restart notification. Try again later');
+      });
+  });
 
-  // Enable graceful stop
-  process.once('SIGINT', () => bot.stop('SIGINT'));
-  process.once('SIGTERM', () => bot.stop('SIGTERM'));
+  bot.command('help', (ctx) => {
+    ctx.reply(
+      'Send /start to register yourself. Send /setPreference to learn how to set search criteria. Send /status to check vaccination query status. Send /pause if you do not want to be notified anymore. Send /resume if you want to resume notification status.'
+    );
+  });
 };
 
-module.exports = botService;
+bot.launch();
+
+// Enable graceful stop
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
+
+module.exports.tgBot = bot;
+module.exports.botService = botService;

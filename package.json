@@ -9,6 +9,7 @@
   "author": "Avinesh Singh <cowinslotbot@avine.sh>",
   "license": "MIT",
   "dependencies": {
+    "moment": "^2.29.1",
     "node-fetch": "^2.6.1",
     "sqlite3": "^5.0.2",
     "telegraf": "^4.3.0"
