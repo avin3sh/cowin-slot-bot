@@ -185,6 +185,24 @@ const getNotificationReceipients = ({ searchClass, searchValue, ageCriteria }) =
   });
 };
 
+const incrementReminderCount = (telegramId) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE users
+      SET reminders_sent = reminders_sent + 1,
+      
+      WHERE telegram_id = $telegram_id`,
+      {
+        $telegram_id: telegramId,
+      },
+      (err) => {
+        if (err) return reject(err);
+        return resolve();
+      }
+    );
+  });
+};
+
 module.exports.registerUser = registerUser;
 module.exports.searchUserByTelegramId = searchUserByTelegramId;
 module.exports.setPreference = setPreference;
@@ -194,3 +212,4 @@ module.exports.getDistinctActiveItemsBySearchClass = getDistinctActiveItemsBySea
 module.exports.incrementFailureCount = incrementFailureCount;
 module.exports.updateQueryStatus = updateQueryStatus;
 module.exports.getNotificationReceipients = getNotificationReceipients;
+module.exports.incrementReminderCount = incrementReminderCount;

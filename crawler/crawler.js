@@ -4,7 +4,7 @@ const fetch = require('node-fetch');
 const db = require('../db/db');
 const { tgBot } = require('../bot/bot');
 
-const CRON_INTERVAL = 45 * 60 * 1000;
+const CRON_INTERVAL = 60 * 60 * 1000;
 
 const fetchSlotDetails = (searchValue, searchClass, date) => {
   let fetchUrl = '';
@@ -128,6 +128,7 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
     for (const receipient of tgReceipients) {
       tgBot.telegram.sendMessage(receipient.telegram_id, msg, { parse_mode: 'HTML' });
       console.info('Sent message to ', receipient.telegram_id);
+      db.incrementReminderCount(receipient.telegram_id);
     }
   } catch (e) {
     console.error(`Error notifying telegram receipients`);
