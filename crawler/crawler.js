@@ -125,6 +125,8 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
       msg += '\n\n';
     }
 
+    msg += 'Send /pause to pause further notifications';
+
     for (const receipient of tgReceipients) {
       tgBot.telegram.sendMessage(receipient.telegram_id, msg, { parse_mode: 'HTML' });
       console.info('Sent message to ', receipient.telegram_id);

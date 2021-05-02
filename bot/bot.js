@@ -132,10 +132,12 @@ const handleStatusShow = (ctx) => {
       else {
         ctx.replyWithHTML(`Here is what I know about you,
           telegram_id: ${res.telegram_id},
-          search criteria: ${res.search_class} - ${res.search_value},
-          age criteria: ${res.age_criteria},
+          search criteria: ${res.search_class} - ${res.search_value} ${
+          res.search_class === 'DISTRICT' ? `(${districts[res.search_value].name})` : ''
+        } ,
+          age criteria: ${res.age_criteria} ${Number(res.age_criteria) === '0' ? 'Both 18+ and 45+' : '+'},
           send notification: ${res.active ? 'Yes' : 'No'},
-          last queried: ${res.last_queried},
+          last queried(UTC): ${res.last_queried},
           last queried status: ${res.last_queried_status},
           query failure count: ${res.query_fail_count},
           total reminders sent: ${res.reminders_sent}
@@ -162,6 +164,8 @@ const botService = () => {
 
       For example, if you want to know CoWid Slots for Hyderabad, send <em>/setSearch DISTRICT 581</em> 
       Or if you want to be reminded of CoWid Slots for PIN 560005, send <em>/setSearch PIN 560005</em>
+
+      After setting search and age preference, you should get a notification as soon as a slot is available
     `);
   });
 
