@@ -190,6 +190,9 @@ const main = () => {
   const w2 = moment().add(7, 'days').format('DD-MM-YYYY').toString();
   const w3 = moment().add(14, 'days').format('DD-MM-YYYY').toString();
 
+  // To make run immediately once
+  crawler([w1, w2, w3]);
+
   setInterval(() => {
     crawler([w1, w2, w3]);
   }, CRON_INTERVAL);
