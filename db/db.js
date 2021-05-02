@@ -189,7 +189,7 @@ const incrementReminderCount = (telegramId) => {
   return new Promise((resolve, reject) => {
     db.run(
       `UPDATE users
-      SET reminders_sent = reminders_sent + 1,
+      SET reminders_sent = reminders_sent + 1
       
       WHERE telegram_id = $telegram_id`,
       {
