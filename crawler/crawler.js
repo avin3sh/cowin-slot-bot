@@ -152,7 +152,11 @@ const fetchCenterData = (items, date) => {
         skimSlotDetails(data)
           .then((result) => {
             if (result.above45Found || result.under45Found)
-              console.info(`Found some slots for ${JSON.stringify(item)}`);
+              console.info(
+                `Found some slots (Under 45: ${Object.keys(result.under45Slots).length}, Above 45: Under 45: ${
+                  Object.keys(result.above45Slots).length
+                }) for ${JSON.stringify(item)}`
+              );
             else console.info(`No slots found`);
 
             if (result.above45Found) sendSlotNotification(item, result.above45Slots, 45);
