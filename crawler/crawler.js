@@ -40,8 +40,10 @@ const skimSlotDetails = (slotData) => {
   const result = {
     above45Found: false,
     above45Slots: {},
+    above45SlotsCount: 0,
     under45Found: false,
     under45Slots: {},
+    under45SlotsCount: 0,
   };
 
   return new Promise((resolve, reject) => {
@@ -74,12 +76,14 @@ const skimSlotDetails = (slotData) => {
 
             if (minAge < 45) {
               result.under45Found = true;
+              result.under45SlotsCount += 1;
 
               // if date key doesn't exist, create it
               if (!result.under45Slots[date]) result.under45Slots[date] = [];
               result.under45Slots[date].push(slotData);
             } else {
               result.above45Found = true;
+              result.above45SlotsCount += 1;
 
               // if date key doesn't exist, create it
               if (!result.above45Slots[date]) result.above45Slots[date] = [];
@@ -127,9 +131,16 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
     msg += 'Send /pause to pause further notifications';
 
     for (const receipient of tgReceipients) {
-      tgBot.telegram.sendMessage(receipient.telegram_id, msg, { parse_mode: 'HTML' });
-      console.info('Sent message to ', receipient.telegram_id);
-      db.incrementReminderCount(receipient.telegram_id);
+      tgBot.telegram
+        .sendMessage(receipient.telegram_id, msg, { parse_mode: 'HTML' })
+        .then(() => {
+          console.info('Sent message to ', receipient.telegram_id);
+          db.incrementReminderCount(receipient.telegram_id);
+        })
+        .catch((e) => {
+          console.error('Failed to send message to', receipient.telegram_id);
+          console.error('Message content', msg);
+        });
     }
   } catch (e) {
     console.error(`Error notifying telegram receipients`);
@@ -148,9 +159,9 @@ const fetchCenterData = (items, date) => {
           .then((result) => {
             if (result.above45Found || result.under45Found)
               console.info(
-                `Found some slots (Under 45: ${Object.keys(result.under45Slots).length}, Above 45: Under 45: ${
-                  Object.keys(result.above45Slots).length
-                }) for ${JSON.stringify(item)} for date ${date}`
+                `Found some slots (Under 45: ${result.under45SlotsCount}, Above 45: ${
+                  result.above45SlotsCount
+                }) for  item ${JSON.stringify(item)} for date ${date}`
               );
             else console.info(`No slots found`);
 
