@@ -1,4 +1,5 @@
 const { Telegraf } = require('telegraf');
+const moment = require('moment-timezone');
 
 const db = require('../db/db');
 const districts = require('../assets/districts.json');
@@ -135,9 +136,13 @@ const handleStatusShow = (ctx) => {
           search criteria: ${res.search_class} - ${res.search_value} ${
           res.search_class === 'DISTRICT' ? `(${districts[res.search_value].name})` : ''
         } ,
-          age criteria: ${res.age_criteria}${Number(res.age_criteria) === 0 ? '(Both 18+ and 45+)' : '+'},
+          age criteria: ${res.age_criteria}${Number(res.age_criteria) === 0 ? ' (Both 18+ and 45+)' : '+'},
           send notification: ${res.active ? 'Yes' : 'No'},
-          last queried(UTC): ${res.last_queried},
+          last queried(IST): ${
+            res.last_queried
+              ? moment.utc(res.last_queried).tz('Asia/Kolkata').format('DD-MM-YYYY h:mm:ss a').toString()
+              : ''
+          },
           last queried status: ${res.last_queried_status},
           query failure count: ${res.query_fail_count},
           total reminders sent: ${res.reminders_sent}

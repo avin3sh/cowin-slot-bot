@@ -1,4 +1,4 @@
-const moment = require('moment');
+const moment = require('moment-timezone');
 const fetch = require('node-fetch');
 
 const db = require('../db/db');
@@ -18,13 +18,8 @@ const fetchSlotDetails = (searchValue, searchClass, date) => {
       method: 'GET',
       cache: 'no-cache',
       headers: {
-        Host: 'cdn-api.co-vin.in',
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:87.0) Gecko/20100101 Firefox/87.0',
-        Accept: 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US, en; q = 0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        Origin: 'https://www.cowin.gov.in',
-        Referer: 'https://www.cowin.gov.in',
+        Accept: 'application/json',
+        'Accept-Language': 'en-US',
         Pragma: 'no-cache',
         'Cache-Control': 'no-cache',
       },
@@ -155,7 +150,7 @@ const fetchCenterData = (items, date) => {
               console.info(
                 `Found some slots (Under 45: ${Object.keys(result.under45Slots).length}, Above 45: Under 45: ${
                   Object.keys(result.above45Slots).length
-                }) for ${JSON.stringify(item)}`
+                }) for ${JSON.stringify(item)} for date ${date}`
               );
             else console.info(`No slots found`);
 
@@ -196,9 +191,9 @@ const crawler = async (dates) => {
 };
 
 const main = () => {
-  const w1 = moment().format('DD-MM-YYYY').toString();
-  const w2 = moment().add(7, 'days').format('DD-MM-YYYY').toString();
-  const w3 = moment().add(14, 'days').format('DD-MM-YYYY').toString();
+  const w1 = moment().tz('Asia/Kolkata').format('DD-MM-YYYY').toString();
+  const w2 = moment().tz('Asia/Kolkata').add(7, 'days').format('DD-MM-YYYY').toString();
+  const w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
 
   // To make run immediately once
   crawler([w1, w2, w3]);
