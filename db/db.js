@@ -3,22 +3,6 @@ const sqlite3 = require('sqlite3').verbose();
 
 const db = new sqlite3.Database(path.join(__dirname, 'db.db'));
 
-const registerUser = ({ telegramId, telegramUsername }) => {
-  return new Promise((resolve, reject) => {
-    db.run(
-      'INSERT INTO users(telegram_id, telegram_username) VALUES($telegram_id, $telegram_username)',
-      {
-        $telegram_id: telegramId,
-        $telegram_username: telegramUsername,
-      },
-      (err) => {
-        if (err) return reject(err);
-        return resolve();
-      }
-    );
-  });
-};
-
 const searchUserByTelegramId = (telegramId) => {
   return new Promise((resolve, reject) => {
     db.get(
@@ -34,28 +18,65 @@ const searchUserByTelegramId = (telegramId) => {
   });
 };
 
-const setPreference = ({ telegramId, searchClass, searchValue }) => {
+const getAllAreasByUser = (telegramId) => {
   return new Promise((resolve, reject) => {
-    db.run(
-      `UPDATE users
-      SET search_class = $search_class,
-      search_value = $search_value
-      
-      WHERE telegram_id = $telegram_id`,
+    db.all(
+      `SELECT * FROM users WHERE telegram_id = $telegram_id`,
       {
         $telegram_id: telegramId,
-        $search_class: searchClass,
-        $search_value: searchValue,
       },
-      (err) => {
+      (err, res) => {
         if (err) return reject(err);
-        return resolve();
+        return resolve(res);
       }
     );
   });
 };
 
-const setAgeCriteria = ({ telegramId, ageCriteria }) => {
+const addArea = ({ telegramId, telegramUsername, searchClass, searchValue }) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `INSERT INTO users(telegram_id, telegram_username, search_class, search_value, age_criteria)
+      VALUES($telegram_id, $telegram_username, $search_class, $search_value, $age_criteria)`,
+      {
+        $telegram_id: telegramId,
+        $telegram_username: telegramUsername,
+        $search_class: searchClass,
+        $search_value: searchValue,
+        $age_criteria: 18, // by default 18-44 vaccination slots
+      },
+      function (err) {
+        if (err) return reject(err);
+        return resolve(this.lastID);
+      }
+    );
+  });
+};
+
+const removeArea = ({ telegramId, searchClass, searchValue }) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `DELETE FROM users
+      WHERE telegram_id = $telegram_id
+      AND search_class = $search_class
+      AND search_value = $search_value`,
+      {
+        $telegram_id: telegramId,
+        $search_class: searchClass,
+        $search_value: searchValue,
+      },
+      function (err) {
+        if (err) return reject(err);
+        return resolve(this.changes);
+      }
+    );
+  });
+};
+
+const setAllAgeCriteria = ({ telegramId, ageCriteria }) => {
+  let ageValue = ageCriteria;
+  if (ageCriteria === 'all') ageValue = 0;
+
   return new Promise((resolve, reject) => {
     db.run(
       `UPDATE users
@@ -64,11 +85,37 @@ const setAgeCriteria = ({ telegramId, ageCriteria }) => {
       WHERE telegram_id = $telegram_id`,
       {
         $telegram_id: telegramId,
-        $age_criteria: ageCriteria,
+        $age_criteria: ageValue,
       },
-      (err) => {
+      function (err) {
         if (err) return reject(err);
-        return resolve();
+        return resolve(this.changes);
+      }
+    );
+  });
+};
+
+const setAgeCriteriaByArea = ({ telegramId, ageCriteria, searchClass, searchValue }) => {
+  let ageValue = ageCriteria;
+  if (ageCriteria === 'all') ageValue = 0;
+
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE users
+      SET age_criteria = $age_criteria
+      
+      WHERE telegram_id = $telegram_id
+      AND search_class = $search_class
+      AND search_value = $search_value`,
+      {
+        $telegram_id: telegramId,
+        $age_criteria: ageValue,
+        $search_class: searchClass,
+        $search_value: searchValue,
+      },
+      function (err) {
+        if (err) return reject(err);
+        return resolve(this.changes);
       }
     );
   });
@@ -185,28 +232,34 @@ const getNotificationReceipients = ({ searchClass, searchValue, ageCriteria }) =
   });
 };
 
-const incrementReminderCount = (telegramId) => {
+const incrementReminderCount = ({ telegramId, searchClass, searchValue }) => {
   return new Promise((resolve, reject) => {
     db.run(
       `UPDATE users
       SET reminders_sent = reminders_sent + 1
       
-      WHERE telegram_id = $telegram_id`,
+      WHERE telegram_id = $telegram_id
+      AND search_class = $search_class
+      AND search_value = $search_value`,
       {
         $telegram_id: telegramId,
+        $search_class: searchClass,
+        $search_value: searchValue,
       },
-      (err) => {
+      function (err) {
         if (err) return reject(err);
-        return resolve();
+        return resolve(this.changes);
       }
     );
   });
 };
 
-module.exports.registerUser = registerUser;
 module.exports.searchUserByTelegramId = searchUserByTelegramId;
-module.exports.setPreference = setPreference;
-module.exports.setAgeCriteria = setAgeCriteria;
+module.exports.getAllAreasByUser = getAllAreasByUser;
+module.exports.addArea = addArea;
+module.exports.removeArea = removeArea;
+module.exports.setAllAgeCriteria = setAllAgeCriteria;
+module.exports.setAgeCriteriaByArea = setAgeCriteriaByArea;
 module.exports.setSubscriptionStatus = setSubscriptionStatus;
 module.exports.getDistinctActiveItemsBySearchClass = getDistinctActiveItemsBySearchClass;
 module.exports.incrementFailureCount = incrementFailureCount;

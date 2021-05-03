@@ -4,6 +4,8 @@ const fetch = require('node-fetch');
 const db = require('../db/db');
 const { tgBot } = require('../bot/bot');
 
+const districts = require('../assets/districts.json');
+
 const CRON_INTERVAL = 30 * 60 * 1000;
 
 const fetchSlotDetails = (searchValue, searchClass, date) => {
@@ -106,7 +108,11 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
       ageCriteria,
     });
 
-    const msgHeader = `Found available vaccine slots for age <strong>${ageCriteria}</strong> and area type <strong>${item.search_class} - ${item.search_value}</strong>,\n`;
+    const msgHeader = `Found available vaccine slots for age <strong>${ageCriteria}</strong> and area type <strong>${
+      item.search_class
+    } - ${item.search_value}${
+      item.search_class === 'DISTRICT' ? `(${districts[item.search_value].name})` : ''
+    }</strong>,\n`;
     const msgFooter = '\nSend /pause to pause further notifications';
     const dates = Object.keys(slots).sort(); // ['03-01-2021', '10-01-2021', ...]
     const slotsByDates = {}; // { '03-01-2021': [{}, {}], ... }
@@ -148,7 +154,11 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
         .sendMessage(receipient.telegram_id, msgContent, { parse_mode: 'HTML' })
         .then(() => {
           console.info('Sent message to ', receipient.telegram_id);
-          db.incrementReminderCount(receipient.telegram_id);
+          db.incrementReminderCount({
+            telegramId: receipient.telegram_id,
+            searchClass: item.search_class,
+            searchValue: item.search_value,
+          });
         })
         .catch((err) => {
           console.error('Failed to send message to', receipient.telegram_id, 'because: ', err);
