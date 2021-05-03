@@ -50,7 +50,8 @@ const skimSlotDetails = (slotData) => {
   };
 
   return new Promise((resolve, reject) => {
-    if (!slotData.centers || !Array.isArray(slotData.centers)) return reject('Invalid `centers` data found');
+    if (typeof slotData.centers === 'undefined' || !Array.isArray(slotData.centers))
+      return reject('Invalid `centers` data found');
 
     slotData.centers.forEach((center) => {
       const centerDetails = {
@@ -65,6 +66,7 @@ const skimSlotDetails = (slotData) => {
           const availableCapacity = session.available_capacity;
           const date = session.date;
           const minAge = session.min_age_limit;
+          const vaccine = session.vaccine;
 
           if (availableCapacity) {
             const slotData = {
@@ -72,6 +74,7 @@ const skimSlotDetails = (slotData) => {
               date,
               availableCapacity,
               minAge,
+              vaccine,
             };
 
             if (minAge < 45) {
@@ -115,14 +118,15 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
       for (const slot of slots[date]) {
         msg += `
           Center: ${slot.centerDetails.centerName}
+          Fee: ${slot.centerDetails.feeType || ''}
           PINCODE: ${slot.centerDetails.pincode}
           Min. age: ${slot.minAge}
           Capacity: ${slot.availableCapacity}
-          --------------------
-          `;
+          ${slot.vaccine ? `Vaccine: ${slot.vaccine}` : ''}
+          --------------------`;
       }
 
-      msg += '\n\n';
+      msg += '\n';
     }
 
     msg += 'Send /pause to pause further notifications';
@@ -201,3 +205,4 @@ const main = () => {
 };
 
 module.exports = main;
+module.exports.skimSlotDetails = skimSlotDetails;
