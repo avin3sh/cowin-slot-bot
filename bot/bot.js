@@ -135,7 +135,7 @@ const handleStatusShow = (ctx) => {
           search criteria: ${res.search_class} - ${res.search_value} ${
           res.search_class === 'DISTRICT' ? `(${districts[res.search_value].name})` : ''
         } ,
-          age criteria: ${res.age_criteria} ${Number(res.age_criteria) === '0' ? 'Both 18+ and 45+' : '+'},
+          age criteria: ${res.age_criteria}${Number(res.age_criteria) === 0 ? '(Both 18+ and 45+)' : '+'},
           send notification: ${res.active ? 'Yes' : 'No'},
           last queried(UTC): ${res.last_queried},
           last queried status: ${res.last_queried_status},
@@ -157,13 +157,13 @@ const botService = () => {
 
   bot.command('setPreference', (ctx) => {
     ctx.replyWithHTML(`
-      Send  <u><em>/setSearch <strong>type</strong> <strong>value</strong></em></u> - where <u>type</u> is either <strong>PIN</strong>
+      Send  <u>/setSearch <em>type</em> <em>value</em></u> - where <u>type</u> is either <strong>PIN</strong>
       or <strong>DISTRICT</strong> and <u>value</u> is either PIN number, in case of <strong>PIN</strong>, or district ID in case of <strong>DISTRICT</strong>. 
 
       To find your your district ID, send <em>/searchDistrict <u>district name</u></em>.
 
-      For example, if you want to know CoWid Slots for Hyderabad, send <em>/setSearch DISTRICT 581</em> 
-      Or if you want to be reminded of CoWid Slots for PIN 560005, send <em>/setSearch PIN 560005</em>
+      For example, if you want to know CoWin Slots for Hyderabad, send <em>/setSearch DISTRICT 581</em> 
+      Or if you want to be reminded of CoWin Slots for PIN 560005, send <em>/setSearch PIN 560005</em>
 
       After setting search and age preference, you should get a notification as soon as a slot is available
     `);
