@@ -106,40 +106,53 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
       ageCriteria,
     });
 
-    let msg = `Found available vaccine slots for age <strong>${ageCriteria}</strong> and area type <strong>${item.search_class} - ${item.search_value}</strong>,
-
-    `;
-
-    const dates = Object.keys(slots).sort();
+    const msgHeader = `Found available vaccine slots for age <strong>${ageCriteria}</strong> and area type <strong>${item.search_class} - ${item.search_value}</strong>,\n`;
+    const msgFooter = '\nSend /pause to pause further notifications';
+    const dates = Object.keys(slots).sort(); // ['03-01-2021', '10-01-2021', ...]
+    const slotsByDates = {}; // { '03-01-2021': [{}, {}], ... }
 
     for (const date of dates) {
-      msg += `Date: <strong>${date}</strong>,`;
+      const slotText = [];
+
       for (const slot of slots[date]) {
-        msg += `
+        slotText.push(`
           Center: ${slot.centerDetails.centerName}
           Fee: ${slot.centerDetails.feeType || ''}
           PINCODE: ${slot.centerDetails.pincode}
           Min. age: ${slot.minAge}
-          Capacity: ${slot.availableCapacity}
-          ${slot.vaccine ? `Vaccine: ${slot.vaccine}` : ''}
-          --------------------`;
+          Capacity: ${slot.availableCapacity}${slot.vaccine ? `\nVaccine: ${slot.vaccine}` : ''}
+          --------------------`);
       }
 
-      msg += '\n';
+      slotsByDates[date] = slotText;
     }
 
-    msg += 'Send /pause to pause further notifications';
+    // Generating msg content
+    let msgContent = msgHeader;
+    dates.forEach((date) => {
+      const dateHeader = `Date: <strong>${date}</strong>,\n`;
+      const dateWarning =
+        slotsByDates[date].length > 10
+          ? `<em>${slotsByDates[date].length} slots available for this date. Showing only first 10</em>`
+          : '';
+      const dateFooter = '';
+
+      const dateBody = slotsByDates[date].splice(0, 10).join('\n');
+
+      msgContent += dateHeader + dateWarning + dateBody + dateFooter;
+    });
+    msgContent += msgFooter;
 
     for (const receipient of tgReceipients) {
       tgBot.telegram
-        .sendMessage(receipient.telegram_id, msg, { parse_mode: 'HTML' })
+        .sendMessage(receipient.telegram_id, msgContent, { parse_mode: 'HTML' })
         .then(() => {
           console.info('Sent message to ', receipient.telegram_id);
           db.incrementReminderCount(receipient.telegram_id);
         })
-        .catch((e) => {
-          console.error('Failed to send message to', receipient.telegram_id);
-          console.error('Message content', msg);
+        .catch((err) => {
+          console.error('Failed to send message to', receipient.telegram_id, 'because: ', err);
+          console.error('Message content: ', msgContent);
         });
     }
   } catch (e) {
