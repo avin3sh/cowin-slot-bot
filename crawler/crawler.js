@@ -50,7 +50,7 @@ const skimSlotDetails = (slotData) => {
 
   return new Promise((resolve, reject) => {
     if (typeof slotData.centers === 'undefined' || !Array.isArray(slotData.centers))
-      return reject('Invalid `centers` data found');
+      return reject(`Invalid 'centers' data found: ${JSON.stringify(slotData.centers)}`);
 
     slotData.centers.forEach((center) => {
       const centerDetails = {
