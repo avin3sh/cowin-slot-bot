@@ -7,6 +7,11 @@ const { tgBot } = require('../bot/bot');
 const districts = require('../assets/districts.json');
 
 const CRON_INTERVAL = 20 * 60 * 1000;
+const FETCH_DELAY = 1000; // 1 second - 1 city and 1 district served per second, 3 dates, therefore 2 * 3 = 6 req/s
+
+const delay = (ms) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
 
 const fetchSlotDetails = (searchValue, searchClass, date) => {
   let fetchUrl = '';
@@ -171,8 +176,9 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
   }
 };
 
-const fetchCenterData = (items, date) => {
+const fetchCenterData = async (items, date) => {
   for (const item of items) {
+    await delay(FETCH_DELAY);
     fetchSlotDetails(item.search_value, item.search_class, date)
       .then((data) => {
         console.info(`Received data for ${JSON.stringify(item)}`);
@@ -214,13 +220,11 @@ const fetchDataForDate = async (date) => {
   console.info(`Got ${pinItems.length} items to crawl for PIN. ${districtItems.length} items to search by district`);
 };
 
-const crawler = async (dates) => {
+const crawler = (dates) => {
   for (const date of dates) {
-    try {
-      fetchDataForDate(date);
-    } catch (e) {
+    fetchDataForDate(date).catch((e) => {
       console.error('Unhandled exception occured when fetching for date', date, ' :', e);
-    }
+    });
   }
 };
 
