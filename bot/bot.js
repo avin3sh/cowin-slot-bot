@@ -289,6 +289,25 @@ const botService = () => {
         ctx.reply('Unable to restart notification. Try again later');
       });
   });
+
+  bot.command('announce', async (ctx) => {
+    // listen to my @trishuldealer announcement messages
+    if (Number(ctx.chat.id) === 123164342 && ctx.message.text.split(' ').length > 1) {
+      try {
+        const telegram_recepients = await db.getAllActiveUsers();
+        ctx.reply(`Found ${telegram_recepients.length} receipients, sending them announcement`);
+
+        telegram_recepients.forEach((tgReceipient) => {
+          bot.telegram.sendMessage(tgReceipient.telegram_id, ctx.message.text.substr(10)).catch((err) => {
+            console.error(`Couldn't send message  to ${tgReceipient.telegram_id}: `, err);
+          });
+        });
+      } catch (err) {
+        console.error(err);
+        ctx.reply('Unable to fetch all active receipients');
+      }
+    }
+  });
 };
 
 bot.launch();

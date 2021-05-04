@@ -6,7 +6,7 @@ const { tgBot } = require('../bot/bot');
 
 const districts = require('../assets/districts.json');
 
-const CRON_INTERVAL = 15 * 60 * 1000;
+const CRON_INTERVAL = 20 * 60 * 1000;
 
 const fetchSlotDetails = (searchValue, searchClass, date) => {
   let fetchUrl = '';

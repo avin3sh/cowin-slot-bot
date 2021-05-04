@@ -33,6 +33,19 @@ const getAllAreasByUser = (telegramId) => {
   });
 };
 
+const getAllActiveUsers = () => {
+  return new Promise((resolve, reject) => {
+    db.all(
+      `SELECT distinct telegram_id FROM users
+    WHERE active = 1`,
+      (err, results) => {
+        if (err) return reject(err);
+        return resolve(results);
+      }
+    );
+  });
+};
+
 const addArea = ({ telegramId, telegramUsername, searchClass, searchValue }) => {
   return new Promise((resolve, reject) => {
     db.run(
@@ -256,6 +269,7 @@ const incrementReminderCount = ({ telegramId, searchClass, searchValue }) => {
 
 module.exports.searchUserByTelegramId = searchUserByTelegramId;
 module.exports.getAllAreasByUser = getAllAreasByUser;
+module.exports.getAllActiveUsers = getAllActiveUsers;
 module.exports.addArea = addArea;
 module.exports.removeArea = removeArea;
 module.exports.setAllAgeCriteria = setAllAgeCriteria;
