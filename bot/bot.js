@@ -40,7 +40,7 @@ For anything else, contact me on @trishuldealer`
 
 const handleDistrictSearch = (ctx) => {
   if (ctx.message.text.split(' ').length < 2)
-    return ctx.reply('Send your query in format /searchdistrict <district name>');
+    return ctx.replyWithMarkdown('Send your query in format `/searchdistrict <district name>`');
 
   const district = String(ctx.message.text).split(' ')[1];
 
@@ -61,7 +61,7 @@ const handleDistrictSearch = (ctx) => {
       msg += `<strong>${district.name} - <u>${district.id}</u></strong>\n`;
     });
 
-    msg += `\nSend /help to add an area for notification`;
+    msg += `\nSend /help to learn how to add an area for notification`;
 
     ctx.replyWithHTML(msg);
   }
@@ -69,8 +69,8 @@ const handleDistrictSearch = (ctx) => {
 
 const handleAddArea = (ctx) => {
   if (ctx.message.text.split(' ').length < 3)
-    return ctx.reply(
-      'Send your query in format `/addarea <PIN|DISTRICT> <pincode|district id>`. Send `/searchdistrict <district name>` to find the district ID.'
+    return ctx.replyWithMarkdown(
+      'Send your query in format `/addarea <PIN|DISTRICT> <pincode|district id>`. Send `/searchdistrict <district name>` to find the district ID. Send /help to learn more.'
     );
 
   const type = String(ctx.message.text).split(' ')[1].toUpperCase();
@@ -84,7 +84,7 @@ const handleAddArea = (ctx) => {
     (type === 'PIN' && value.length !== 6) ||
     (type === 'DISTRICT' && !districts[value])
   ) {
-    ctx.reply(
+    ctx.replyWithMarkdown(
       `Invalid VALUE ${value} received. Value should be a number. In case of PIN, it should be 6 digit PIN code.
         In case of district it should be a valid district ID. Send \`/searchdistrict <district name>\` to find the district ID. Send /help to learn more.`
     );
@@ -109,8 +109,8 @@ const handleAddArea = (ctx) => {
 
 const handleRemoveArea = (ctx) => {
   if (ctx.message.text.split(' ').length < 3)
-    return ctx.reply(
-      'Send your query in format `/removearea <PIN|DISTRICT> <pincode|district id>`. Send `/status` to find the district ID that you have saved.'
+    return ctx.replyWithMarkdown(
+      'Send your query in format `/removearea <PIN|DISTRICT> <pincode|district id>`. Send `/status` to find the district ID that you saved earlier.'
     );
 
   const type = String(ctx.message.text).split(' ')[1].toUpperCase();
@@ -124,7 +124,7 @@ const handleRemoveArea = (ctx) => {
     (type === 'PIN' && value.length !== 6) ||
     (type === 'DISTRICT' && !districts[value])
   ) {
-    ctx.reply(
+    ctx.replyWithMarkdown(
       `Invalid VALUE ${value} received. Value should be a number. In case of PIN, it should be 6 digit PIN code.
         In case of district it should be a valid district ID. Send \`/status\` to verify the district ID that you have saved.`
     );
@@ -155,7 +155,7 @@ const handleAgeCriteria = (ctx) => {
   const params = ctx.message.text.split(' ');
 
   if (params.length < 2) {
-    return ctx.reply(
+    return ctx.replyWithMarkdown(
       'To set age limit preference, send `/agelimit <all|18|45>` or `/agelimit <all|18|45> <PIN|DISTRICT> <pincode|district id>`. Send /help to learn more'
     );
   } else {
@@ -176,7 +176,7 @@ const handleAgeCriteria = (ctx) => {
 
   if (!isAreaSpecific) {
     db.setAllAgeCriteria({ telegramId: ctx.chat.id, ageCriteria: age }).then((updatedRows) => {
-      ctx.reply(`Update age criteria for ${updatedRows} area${updatedRows > 1 ? 's' : ''}. Send /status to verify.`);
+      ctx.reply(`Updated age criteria for ${updatedRows} area${updatedRows > 1 ? 's' : ''}. Send /status to verify.`);
     });
   } else {
     if (!searchClass || !['PIN', 'DISTRICT'].includes(searchClass)) {
@@ -187,7 +187,7 @@ const handleAgeCriteria = (ctx) => {
       (searchClass === 'PIN' && searchValue.length !== 6) ||
       (searchClass === 'DISTRICT' && !districts[searchValue])
     ) {
-      ctx.reply(
+      ctx.replyWithMarkdown(
         `Invalid VALUE ${value} received. Area value should be a number. In case of PIN, it should be 6 digit PIN code.
           In case of district it should be a valid district ID. Send \`/searchdistrict <district name>\` to find the district ID. Send /help to learn more.`
       );
@@ -221,10 +221,10 @@ const handleStatusShow = (ctx) => {
           Age criteria: ${area.age_criteria}${Number(area.age_criteria) === 0 ? ' (Both 18+ and 45+)' : '+'},
           Last checked: ${
             area.last_queried
-              ? moment.utc(area.last_queried).tz('Asia/Kolkata').format('DD-MM-YYYY h:mm:ss a').toString()
-              : 'Note yet'
+              ? moment.utc(area.last_queried).tz('Asia/Kolkata').format('DD-MM-YYYY h:mm a').toString()
+              : 'Not yet'
           },
-          Last check successful ?: ${area.last_queried_status},
+          Last check status: ${area.last_queried_status},
           No. of failed queries: ${area.query_fail_count},
           Notifications sent: ${area.reminders_sent}
           --------------------
@@ -232,7 +232,7 @@ const handleStatusShow = (ctx) => {
         });
 
         msgContent += `\nNotifications enabled: ${rows[0].active ? 'Yes' : 'No'}`;
-        msgContent += '\nSend /help to learn more';
+        msgContent += '\n\nSend /help to learn more';
 
         ctx.reply(msgContent);
       }

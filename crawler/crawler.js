@@ -126,7 +126,7 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
           Fee: ${slot.centerDetails.feeType || ''}
           PINCODE: ${slot.centerDetails.pincode}
           Min. age: ${slot.minAge}
-          Capacity: ${slot.availableCapacity}${slot.vaccine ? `\nVaccine: ${slot.vaccine}` : ''}
+          Capacity: ${slot.availableCapacity}${slot.vaccine ? `\n          Vaccine: ${slot.vaccine}` : ''}
           --------------------`);
       }
 
@@ -136,7 +136,7 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
     // Generating msg content
     let msgContent = msgHeader;
     dates.forEach((date) => {
-      const dateHeader = `Date: <strong>${date}</strong>,\n`;
+      const dateHeader = `\nDate: <strong>${date}</strong>,\n`;
       const dateWarning =
         slotsByDates[date].length > 10
           ? `<em>${slotsByDates[date].length} slots available for this date. Showing only first 10</em>`
@@ -225,14 +225,17 @@ const crawler = async (dates) => {
 };
 
 const main = () => {
-  const w1 = moment().tz('Asia/Kolkata').format('DD-MM-YYYY').toString();
-  const w2 = moment().tz('Asia/Kolkata').add(7, 'days').format('DD-MM-YYYY').toString();
-  const w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
+  let w1 = moment().tz('Asia/Kolkata').format('DD-MM-YYYY').toString();
+  let w2 = moment().tz('Asia/Kolkata').add(7, 'days').format('DD-MM-YYYY').toString();
+  let w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
 
   // To make run immediately once
   crawler([w1, w2, w3]);
 
   setInterval(() => {
+    w1 = moment().tz('Asia/Kolkata').format('DD-MM-YYYY').toString();
+    w2 = moment().tz('Asia/Kolkata').add(7, 'days').format('DD-MM-YYYY').toString();
+    w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
     crawler([w1, w2, w3]);
   }, CRON_INTERVAL);
 };
