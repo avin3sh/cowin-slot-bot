@@ -1,3 +1,4 @@
+const schedule = require('node-schedule');
 const moment = require('moment-timezone');
 const fetch = require('node-fetch');
 
@@ -6,9 +7,9 @@ const { tgBot } = require('../bot/bot');
 
 const districts = require('../assets/districts.json');
 
-const CRON_INTERVAL = 15 * 60 * 1000;
-const FETCH_DELAY = 20000; // 20 seconds - 1 city and 1 district served per second, 3 dates, therefore 2 * 3 = 6 req/s
+const FETCH_DELAY = 3000; // 3 seconds - CoWin API restricts 100 reqs per 5 minute(300 seconds).
 const NOTIF_DELAY = 100; // 100ms
+let queuActive = false;
 
 const delay = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -213,11 +214,14 @@ const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) =>
   }
 };
 
-const fetchCenterData = async (items, date) => {
-  for (const item of items) {
-    await delay(FETCH_DELAY);
-    fetchSlotDetails(item.search_value, item.search_class, date)
-      .then((data) => {
+const fetchCenterData = (items, date) => {
+  return new Promise(async (resolve) => {
+    for (const item of items) {
+      await delay(FETCH_DELAY);
+
+      try {
+        const data = await fetchSlotDetails(item.search_value, item.search_class, date);
+
         console.info(`Received data for ${JSON.stringify(item)}`);
         db.updateQueryStatus({ searchClass: item.search_class, searchValue: item.search_value });
 
@@ -237,32 +241,43 @@ const fetchCenterData = async (items, date) => {
           .catch((err) => {
             console.error(`Error occured while skimming details for ${JSON.stringify(item)} : ${err}`);
           });
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error(`Error fetching details for ${JSON.stringify(item)}: `, err);
         db.incrementFailureCount({ searchClass: item.search_class, searchValue: item.search_value });
-      });
-  }
+      }
+    }
+
+    return resolve();
+  });
 };
 
-const fetchDataForDate = async (date) => {
-  console.info('Fetching data for', date);
+const fetchDataForDate = (date) => {
+  return new Promise(async (resolve) => {
+    console.info('Fetching data for', date);
+    const pinItems = await db.getDistinctActiveItemsBySearchClass('pin');
+    const districtItems = await db.getDistinctActiveItemsBySearchClass('district');
+    console.info(`Got ${pinItems.length} items to crawl for PIN. ${districtItems.length} items to search by district`);
 
-  const pinItems = await db.getDistinctActiveItemsBySearchClass('pin');
-  const districtItems = await db.getDistinctActiveItemsBySearchClass('district');
-
-  fetchCenterData(pinItems, date);
-  fetchCenterData(districtItems, date);
-
-  console.info(`Got ${pinItems.length} items to crawl for PIN. ${districtItems.length} items to search by district`);
+    fetchCenterData(pinItems, date).finally(() => {
+      fetchCenterData(districtItems, date).finally(() => {
+        return resolve();
+      });
+    });
+  });
 };
 
 const crawler = (dates) => {
-  for (const date of dates) {
-    fetchDataForDate(date).catch((e) => {
-      console.error('Unhandled exception occured when fetching for date', date, ' :', e);
-    });
-  }
+  return new Promise(async (resolve) => {
+    for (const date of dates) {
+      try {
+        await fetchDataForDate(date);
+      } catch (e) {
+        console.error('Unhandled exception occured when fetching for date', date, ' :', e);
+      }
+    }
+
+    return resolve();
+  });
 };
 
 const main = () => {
@@ -271,14 +286,34 @@ const main = () => {
   let w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
 
   // To make run immediately once
-  crawler([w1, w2, w3]);
+  queuActive = true;
+  crawler([w1, w2, w3])
+    .catch(() => {})
+    .finally(() => {
+      queuActive = false;
+    });
 
-  setInterval(() => {
+  const rule = new schedule.RecurrenceRule();
+  rule.minute = new schedule.Range(0, 60, 5); // every 5 minutes
+
+  const job = schedule.scheduleJob(rule, () => {
+    console.info('Starting job');
+    if (queuActive) {
+      console.info('Previous job active...exiting');
+      return;
+    }
+
     w1 = moment().tz('Asia/Kolkata').format('DD-MM-YYYY').toString();
     w2 = moment().tz('Asia/Kolkata').add(7, 'days').format('DD-MM-YYYY').toString();
     w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
-    crawler([w1, w2, w3]);
-  }, CRON_INTERVAL);
+
+    queuActive = true;
+    crawler([w1, w2, w3])
+      .catch(() => {})
+      .finally(() => {
+        queuActive = false;
+      });
+  });
 };
 
 module.exports = main;

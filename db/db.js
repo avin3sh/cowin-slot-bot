@@ -166,6 +166,8 @@ const getDistinctActiveItemsBySearchClass = (searchClass) => {
     AND age_criteria IS NOT NULL
     AND query_fail_count < 10
     AND search_class = $search_class
+
+    ORDER BY search_value ASC
     `,
       {
         $search_class: sc,
