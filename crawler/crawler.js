@@ -6,8 +6,8 @@ const { tgBot } = require('../bot/bot');
 
 const districts = require('../assets/districts.json');
 
-const CRON_INTERVAL = 20 * 60 * 1000;
-const FETCH_DELAY = 1000; // 1 second - 1 city and 1 district served per second, 3 dates, therefore 2 * 3 = 6 req/s
+const CRON_INTERVAL = 15 * 60 * 1000;
+const FETCH_DELAY = 20000; // 20 seconds - 1 city and 1 district served per second, 3 dates, therefore 2 * 3 = 6 req/s
 const NOTIF_DELAY = 100; // 100ms
 
 const delay = (ms) => {
