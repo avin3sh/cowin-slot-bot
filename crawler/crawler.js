@@ -8,6 +8,7 @@ const districts = require('../assets/districts.json');
 
 const CRON_INTERVAL = 20 * 60 * 1000;
 const FETCH_DELAY = 1000; // 1 second - 1 city and 1 district served per second, 3 dates, therefore 2 * 3 = 6 req/s
+const NOTIF_DELAY = 100; // 100ms
 
 const delay = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -105,7 +106,7 @@ const skimSlotDetails = (slotData) => {
   });
 };
 
-const sendSlotNotification = async (item, slots, ageCriteria) => {
+const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) => {
   try {
     const tgReceipients = await db.getNotificationReceipients({
       searchClass: item.search_class,
@@ -126,13 +127,12 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
       const slotText = [];
 
       for (const slot of slots[date]) {
-        slotText.push(`
-          Center: ${slot.centerDetails.centerName}
-          Fee: ${slot.centerDetails.feeType || ''}
-          PINCODE: ${slot.centerDetails.pincode}
-          Min. age: ${slot.minAge}
-          Capacity: ${slot.availableCapacity}${slot.vaccine ? `\n          Vaccine: ${slot.vaccine}` : ''}
-          --------------------`);
+        slotText.push(`       Center: ${slot.centerDetails.centerName}
+         Fee: ${slot.centerDetails.feeType || ''}
+         PINCODE: ${slot.centerDetails.pincode}
+         Min. age: ${slot.minAge}
+         Capacity: ${slot.availableCapacity}${slot.vaccine ? `\n      Vaccine: ${slot.vaccine}` : ''}
+    --------------------`);
       }
 
       slotsByDates[date] = slotText;
@@ -140,35 +140,72 @@ const sendSlotNotification = async (item, slots, ageCriteria) => {
 
     // Generating msg content
     let msgContent = msgHeader;
+    let showLimited = false;
+    let maxSlotsPerDay = 10;
+    if (totalSlotCount > 70) {
+      showLimited = true;
+      maxSlotsPerDay = 3;
+      msgContent += `\nYou have <strong>${totalSlotCount}</strong> slots for next three weeks. We are showing only first three centers for each day. Please visit cowin.gov.in to see all the slots or use PINCODE instead of entire district. We can not show so many results.\n`;
+    }
+
+    let chunks = [];
     dates.forEach((date) => {
-      const dateHeader = `\nDate: <strong>${date}</strong>,\n`;
+      if (msgContent.length > 2500) {
+        chunks.push(msgContent);
+        msgContent = '';
+      }
+      const dateHeader = `\n\nDate: <strong>${date}</strong>,\n`;
       const dateWarning =
-        slotsByDates[date].length > 10
+        slotsByDates[date].length > 10 && !showLimited
           ? `<em>${slotsByDates[date].length} slots available for this date. Showing only first 10</em>`
           : '';
       const dateFooter = '';
 
-      const dateBody = slotsByDates[date].splice(0, 10).join('\n');
+      const dateBody = slotsByDates[date].splice(0, maxSlotsPerDay).join('\n');
 
       msgContent += dateHeader + dateWarning + dateBody + dateFooter;
     });
-    msgContent += msgFooter;
+
+    if (!chunks.length) msgContent += msgFooter;
+    else {
+      chunks.push(msgContent);
+      chunks[chunks.length - 1] += msgFooter;
+    }
 
     for (const receipient of tgReceipients) {
-      tgBot.telegram
-        .sendMessage(receipient.telegram_id, msgContent, { parse_mode: 'HTML' })
-        .then(() => {
-          console.info('Sent message to ', receipient.telegram_id);
-          db.incrementReminderCount({
-            telegramId: receipient.telegram_id,
-            searchClass: item.search_class,
-            searchValue: item.search_value,
+      if (!chunks.length) {
+        await delay(NOTIF_DELAY);
+        tgBot.telegram
+          .sendMessage(receipient.telegram_id, msgContent, { parse_mode: 'HTML' })
+          .then(() => {
+            console.info('Sent message to ', receipient.telegram_id);
+            db.incrementReminderCount({
+              telegramId: receipient.telegram_id,
+              searchClass: item.search_class,
+              searchValue: item.search_value,
+            });
+          })
+          .catch((err) => {
+            console.error('Failed to send message to', receipient.telegram_id, 'because: ', err);
           });
-        })
-        .catch((err) => {
-          console.error('Failed to send message to', receipient.telegram_id, 'because: ', err);
-          console.error('Message content: ', msgContent);
+      } else {
+        chunks.forEach(async (msg) => {
+          await delay(NOTIF_DELAY);
+          tgBot.telegram
+            .sendMessage(receipient.telegram_id, msg, { parse_mode: 'HTML' })
+            .then(() => {
+              console.info('Sent chunked message to ', receipient.telegram_id);
+              db.incrementReminderCount({
+                telegramId: receipient.telegram_id,
+                searchClass: item.search_class,
+                searchValue: item.search_value,
+              });
+            })
+            .catch((err) => {
+              console.error('Failed to send chunked message to', receipient.telegram_id, 'because: ', err);
+            });
         });
+      }
     }
   } catch (e) {
     console.error(`Error notifying telegram receipients`);
@@ -194,8 +231,8 @@ const fetchCenterData = async (items, date) => {
               );
             else console.info(`No slots found`);
 
-            if (result.above45Found) sendSlotNotification(item, result.above45Slots, 45);
-            if (result.under45Found) sendSlotNotification(item, result.under45Slots, 18);
+            if (result.above45Found) sendSlotNotification(item, result.above45Slots, 45, result.above45SlotsCount);
+            if (result.under45Found) sendSlotNotification(item, result.under45Slots, 18, result.under45SlotsCount);
           })
           .catch((err) => {
             console.error(`Error occured while skimming details for ${JSON.stringify(item)} : ${err}`);

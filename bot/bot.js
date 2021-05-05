@@ -96,7 +96,9 @@ const handleAddArea = (ctx) => {
       searchValue: value,
     })
       .then(() => {
-        ctx.reply('Successfully added the area. Send /status to verify');
+        ctx.reply(
+          `Successfully added the area. Send /status to verify. Note: Default age criteria is 18-44. Use /agelimit to update age criteria for this area`
+        );
       })
       .catch((err) => {
         console.error(err);
