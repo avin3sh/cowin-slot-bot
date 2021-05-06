@@ -190,7 +190,7 @@ const handleAgeCriteria = (ctx) => {
       (searchClass === 'DISTRICT' && !districts[searchValue])
     ) {
       ctx.replyWithMarkdown(
-        `Invalid VALUE ${value} received. Area value should be a number. In case of PIN, it should be 6 digit PIN code.
+        `Invalid VALUE ${searchValue} received. Area value should be a number. In case of PIN, it should be 6 digit PIN code.
           In case of district it should be a valid district ID. Send \`/searchdistrict <district name>\` to find the district ID. Send /help to learn more.`
       );
     } else {
