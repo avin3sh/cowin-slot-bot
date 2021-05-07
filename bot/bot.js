@@ -302,6 +302,16 @@ const botService = () => {
         telegram_recepients.forEach((tgReceipient) => {
           bot.telegram.sendMessage(tgReceipient.telegram_id, ctx.message.text.substr(10)).catch((err) => {
             console.error(`Couldn't send message  to ${tgReceipient.telegram_id}: `, err);
+            if (
+              err &&
+              err.response &&
+              err.response === 403 &&
+              err.description &&
+              err.description === 'Forbidden: bot was blocked by the user'
+            ) {
+              // mark users subscription as inactive if failed to send message
+              db.setSubscriptionStatus({ telegramId: tgReceipient.telegram_id, status: 0 });
+            }
           });
         });
       } catch (err) {
