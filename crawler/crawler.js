@@ -147,7 +147,7 @@ const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) =>
     if (totalSlotCount > 70) {
       showLimited = true;
       maxSlotsPerDay = 3;
-      msgContent += `\nYou have <strong>${totalSlotCount}</strong> slots for next three weeks. We are showing only first three centers for each day. Please visit cowin.gov.in to see all the slots or use PINCODE instead of entire district. We can not show so many results.\n`;
+      msgContent += `\nYou have <strong>${totalSlotCount}</strong> slots for next 14 days. We are showing only first three centers for each day. Please visit cowin.gov.in to see all the slots or use PINCODE instead of entire district. We can not show so many results.\n`;
     }
 
     let chunks = [];
@@ -159,7 +159,7 @@ const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) =>
       const dateHeader = `\n\nDate: <strong>${date}</strong>,\n`;
       const dateWarning =
         slotsByDates[date].length > 10 && !showLimited
-          ? `<em>${slotsByDates[date].length} slots available for this date. Showing only first 10</em>`
+          ? `<em>${slotsByDates[date].length} slots available for this date. Showing only first 10</em>\n`
           : '';
       const dateFooter = '';
 
@@ -284,11 +284,11 @@ const crawler = (dates) => {
 const main = () => {
   let w1 = moment().tz('Asia/Kolkata').format('DD-MM-YYYY').toString();
   let w2 = moment().tz('Asia/Kolkata').add(7, 'days').format('DD-MM-YYYY').toString();
-  let w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
+  //let w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
 
   // To make run immediately once
   queuActive = true;
-  crawler([w1, w2, w3])
+  crawler([w1, w2])
     .catch(() => {})
     .finally(() => {
       queuActive = false;
@@ -306,10 +306,10 @@ const main = () => {
 
     w1 = moment().tz('Asia/Kolkata').format('DD-MM-YYYY').toString();
     w2 = moment().tz('Asia/Kolkata').add(7, 'days').format('DD-MM-YYYY').toString();
-    w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
+    //  w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
 
     queuActive = true;
-    crawler([w1, w2, w3])
+    crawler([w1, w2])
       .catch(() => {})
       .finally(() => {
         queuActive = false;
