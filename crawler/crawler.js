@@ -133,7 +133,7 @@ const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) =>
          Fee: ${slot.centerDetails.feeType || ''}
          PINCODE: ${slot.centerDetails.pincode}
          Min. age: ${slot.minAge}
-         Capacity: ${slot.availableCapacity}${slot.vaccine ? `\n      Vaccine: ${slot.vaccine}` : ''}
+         Capacity: ${slot.availableCapacity}${slot.vaccine ? `\n         Vaccine: ${slot.vaccine}` : ''}
     --------------------`);
       }
 
@@ -189,6 +189,10 @@ const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) =>
           })
           .catch((err) => {
             console.error('Failed to send message to', receipient.telegram_id, 'because: ', err);
+            if (err && err.response && err.response === 403) {
+              // mark users subscription as inactive if failed to send message
+              db.setSubscriptionStatus({ telegramId: receipient.telegram_id, status: 0 });
+            }
           });
       } else {
         chunks.forEach(async (msg) => {
@@ -205,6 +209,10 @@ const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) =>
             })
             .catch((err) => {
               console.error('Failed to send chunked message to', receipient.telegram_id, 'because: ', err);
+              if (err && err.response && err.response === 403) {
+                // mark users subscription as inactive if failed to send message
+                db.setSubscriptionStatus({ telegramId: receipient.telegram_id, status: 0 });
+              }
             });
         });
       }
