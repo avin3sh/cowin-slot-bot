@@ -10,6 +10,7 @@ const districts = require('../assets/districts.json');
 const FETCH_DELAY = 3000; // 3 seconds - CoWin API restricts 100 reqs per 5 minute(300 seconds).
 const NOTIF_DELAY = 100; // 100ms
 let queuActive = false;
+let fetchStartedAt = new Date().getTime();
 
 const delay = (ms) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -238,7 +239,10 @@ const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) =>
 const fetchCenterData = (items, date) => {
   return new Promise(async (resolve) => {
     for (const item of items) {
-      await delay(FETCH_DELAY);
+      let timeSpentSinceLastFetch = new Date().getTime() - fetchStartedAt;
+      if (timeSpentSinceLastFetch > FETCH_DELAY) timeSpentSinceLastFetch = FETCH_DELAY;
+      await delay(FETCH_DELAY - timeSpentSinceLastFetch);
+      fetchStartedAt = new Date().getTime();
 
       try {
         const data = await fetchSlotDetails(item.search_value, item.search_class, date);
@@ -279,11 +283,19 @@ const fetchDataForDate = (date) => {
     const districtItems = await db.getDistinctActiveItemsBySearchClass('district');
     console.info(`Got ${pinItems.length} items to crawl for PIN. ${districtItems.length} items to search by district`);
 
-    fetchCenterData(pinItems, date).finally(() => {
-      fetchCenterData(districtItems, date).finally(() => {
-        return resolve();
-      });
-    });
+    try {
+      await fetchCenterData(pinItems, date);
+    } catch (err) {
+      console.error(`Failed fetching centerdata for ${JSON.stringify(pinItems)} for ${date}`, err);
+    }
+
+    try {
+      await fetchCenterData(districtItems, date);
+    } catch (err) {
+      console.error(`Failed fetching centerdata for ${JSON.stringify(districtItems)} for ${date}`, err);
+    }
+
+    return resolve();
   });
 };
 
