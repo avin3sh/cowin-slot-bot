@@ -305,9 +305,9 @@ const botService = () => {
             if (
               err &&
               err.response &&
-              err.response === 403 &&
-              err.description &&
-              err.description === 'Forbidden: bot was blocked by the user'
+              err.response.error_code === 403 &&
+              err.response.description &&
+              err.response.description === 'Forbidden: bot was blocked by the user'
             ) {
               // mark users subscription as inactive if failed to send message
               db.setSubscriptionStatus({ telegramId: tgReceipient.telegram_id, status: 0 });
