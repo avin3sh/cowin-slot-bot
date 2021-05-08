@@ -315,12 +315,12 @@ const crawler = (dates) => {
 
 const main = () => {
   let w1 = moment().tz('Asia/Kolkata').format('DD-MM-YYYY').toString();
-  let w2 = moment().tz('Asia/Kolkata').add(7, 'days').format('DD-MM-YYYY').toString();
+  // let w2 = moment().tz('Asia/Kolkata').add(7, 'days').format('DD-MM-YYYY').toString();
   //let w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
 
   // To make run immediately once
   queuActive = true;
-  crawler([w1, w2])
+  crawler([w1])
     .catch(() => {})
     .finally(() => {
       queuActive = false;
@@ -341,7 +341,7 @@ const main = () => {
     //  w3 = moment().tz('Asia/Kolkata').add(14, 'days').format('DD-MM-YYYY').toString();
 
     queuActive = true;
-    crawler([w1, w2])
+    crawler([w1])
       .catch(() => {})
       .finally(() => {
         queuActive = false;
