@@ -32,7 +32,7 @@ const fetchSlotDetails = (searchValue, searchClass, date) => {
         'Accept-Language': 'en-US',
         Pragma: 'no-cache',
         'Cache-Control': 'no-cache',
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:87.0) cURL Selenium',
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:87.0) node-fetch/1.0 (+https://github.com/bitinn/node-fetch)',
       },
     })
       .then((resp) => resp.json())
