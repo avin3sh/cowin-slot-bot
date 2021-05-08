@@ -303,6 +303,31 @@ const botService = () => {
       });
   });
 
+  bot.command('announcespecifically', async (ctx) => {
+    // listen to my @trishuldealer announcement messages
+    if (Number(ctx.chat.id) === 123164342 && ctx.message.text.split(' ').length > 2) {
+      const tg_receipient_id = ctx.message.text.split(' ')[1];
+      const msg = ctx.message.text.substr(22 + ctx.message.text.split(' ')[1].length);
+
+      bot.telegram
+        .sendMessage(tg_receipient_id, msg)
+        .then(() => ctx.reply(`Sent message to ${tg_receipient_id}: ${msg}`))
+        .catch((err) => {
+          console.error(`Couldn't send message  to ${tg_receipient_id}: `, err);
+          if (
+            err &&
+            err.response &&
+            err.response.error_code === 403 &&
+            err.response.description &&
+            err.response.description === 'Forbidden: bot was blocked by the user'
+          ) {
+            // mark users subscription as inactive if failed to send message
+            db.setSubscriptionStatus({ telegramId: tgReceipient.telegram_id, status: 0 });
+          }
+        });
+    }
+  });
+
   bot.command('announce', async (ctx) => {
     // listen to my @trishuldealer announcement messages
     if (Number(ctx.chat.id) === 123164342 && ctx.message.text.split(' ').length > 1) {
