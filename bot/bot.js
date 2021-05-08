@@ -335,21 +335,26 @@ const botService = () => {
         const telegram_recepients = await db.getAllActiveUsers();
         ctx.reply(`Found ${telegram_recepients.length} receipients, sending them announcement`);
 
+        const promises = [];
         telegram_recepients.forEach((tgReceipient) => {
-          bot.telegram.sendMessage(tgReceipient.telegram_id, ctx.message.text.substr(10)).catch((err) => {
-            console.error(`Couldn't send message  to ${tgReceipient.telegram_id}: `, err);
-            if (
-              err &&
-              err.response &&
-              err.response.error_code === 403 &&
-              err.response.description &&
-              err.response.description === 'Forbidden: bot was blocked by the user'
-            ) {
-              // mark users subscription as inactive if failed to send message
-              db.setSubscriptionStatus({ telegramId: tgReceipient.telegram_id, status: 0 });
-            }
-          });
+          promises.push(
+            bot.telegram.sendMessage(tgReceipient.telegram_id, ctx.message.text.substr(10)).catch((err) => {
+              console.error(`Couldn't send message  to ${tgReceipient.telegram_id}: `, err);
+              if (
+                err &&
+                err.response &&
+                err.response.error_code === 403 &&
+                err.response.description &&
+                err.response.description === 'Forbidden: bot was blocked by the user'
+              ) {
+                // mark users subscription as inactive if failed to send message
+                db.setSubscriptionStatus({ telegramId: tgReceipient.telegram_id, status: 0 });
+              }
+            })
+          );
         });
+
+        Promise.all(promises).then((values) => ctx.reply(`Delivered message to ${values.length} folks`));
       } catch (err) {
         console.error(err);
         ctx.reply('Unable to fetch all active receipients');
