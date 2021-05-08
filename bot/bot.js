@@ -67,7 +67,18 @@ const handleDistrictSearch = (ctx) => {
   }
 };
 
-const handleAddArea = (ctx) => {
+const handleAddArea = async (ctx) => {
+  try {
+    const { area_count } = await db.getAddedAreaCount({ telegramId: ctx.chat.id });
+    if (Number.parseInt(area_count) >= 5)
+      return ctx.reply(
+        `To prevent service abuse, you are only allowed to add maximum of 5 areas. Please remove an existing area using /removearea command before adding a new one.`
+      );
+  } catch (err) {
+    console.error(err);
+    return ctx.reply('A database error occured. Please try again later.');
+  }
+
   if (ctx.message.text.split(' ').length < 3)
     return ctx.replyWithMarkdown(
       'Send your query in format `/addarea <PIN|DISTRICT> <pincode|district id>`. Send `/searchdistrict <district name>` to find the district ID. Send /help to learn more.'

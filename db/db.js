@@ -66,6 +66,21 @@ const addArea = ({ telegramId, telegramUsername, searchClass, searchValue }) => 
   });
 };
 
+const getAddedAreaCount = ({ telegramId }) => {
+  return new Promise((resolve, reject) => {
+    db.get(
+      'SELECT COUNT(*) AS area_count FROM users WHERE telegram_id = $telegram_id',
+      {
+        $telegram_id: telegramId,
+      },
+      (err, res) => {
+        if (err) return reject(err);
+        return resolve(res);
+      }
+    );
+  });
+};
+
 const removeArea = ({ telegramId, searchClass, searchValue }) => {
   return new Promise((resolve, reject) => {
     db.run(
@@ -273,6 +288,7 @@ module.exports.searchUserByTelegramId = searchUserByTelegramId;
 module.exports.getAllAreasByUser = getAllAreasByUser;
 module.exports.getAllActiveUsers = getAllActiveUsers;
 module.exports.addArea = addArea;
+module.exports.getAddedAreaCount = getAddedAreaCount;
 module.exports.removeArea = removeArea;
 module.exports.setAllAgeCriteria = setAllAgeCriteria;
 module.exports.setAgeCriteriaByArea = setAgeCriteriaByArea;
