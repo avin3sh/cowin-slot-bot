@@ -217,6 +217,124 @@ const handleAgeCriteria = (ctx) => {
   }
 };
 
+const handleVaccineCriteria = (ctx) => {
+  let vaccine = 'all';
+  let isAreaSpecific = false;
+  let searchClass = null;
+  let searchValue = null;
+
+  const params = ctx.message.text.split(' ');
+
+  if (params.length < 2) {
+    return ctx.replyWithMarkdown(
+      'To set vaccine preference, send `/vaccine <all|COVAXIN|COVISHIELD>` or `/vaccine <all|COVAXIN|COVISHIELD> <PIN|DISTRICT> <pincode|district id>`. Send /help to learn more'
+    );
+  } else {
+    if (params[1].toLowerCase() !== 'all') vaccine = String(params[1]).toUpperCase();
+  }
+
+  if (vaccine === null || !['all', 'COVAXIN', 'COVISHIELD'].includes(vaccine))
+    return ctx.reply('Invalid vaccine value specified. Valid values are all, COVAXIN and COVISHIELD');
+
+  if (params.length > 2) {
+    if (params.length < 4)
+      ctx.reply('Need 3 parameters - vaccine, PIN/DISTRICT and pincode or district ID. Send /help to learn more');
+
+    isAreaSpecific = true;
+    searchClass = String(ctx.message.text).split(' ')[2].toUpperCase();
+    searchValue = String(ctx.message.text).split(' ')[3];
+  }
+
+  if (!isAreaSpecific) {
+    db.setAllvaccineCriteria({ telegramId: ctx.chat.id, vaccineCriteria: vaccine }).then((updatedRows) => {
+      ctx.reply(
+        `Updated vaccine criteria for ${updatedRows} area${updatedRows > 1 ? 's' : ''}. Send /status to verify.`
+      );
+    });
+  } else {
+    if (!searchClass || !['PIN', 'DISTRICT'].includes(searchClass)) {
+      ctx.reply('Invalid TYPE - it should either be PIN or DISTRICT');
+    } else if (
+      !searchValue ||
+      Number.isNaN(searchValue) ||
+      (searchClass === 'PIN' && searchValue.length !== 6) ||
+      (searchClass === 'DISTRICT' && !districts[searchValue])
+    ) {
+      ctx.replyWithMarkdown(
+        `Invalid VALUE ${searchValue} received. Area value should be a number. In case of PIN, it should be 6 digit PIN code.
+          In case of district it should be a valid district ID. Send \`/searchdistrict <district name>\` to find the district ID. Send /help to learn more.`
+      );
+    } else {
+      db.setVaccineCriteriaByArea({
+        telegramId: ctx.chat.id,
+        vaccineCriteria: vaccine,
+        searchClass,
+        searchValue,
+      }).then(() => {
+        ctx.reply(`Updated vaccine criteria for the provided area. Send /status to verify.`);
+      });
+    }
+  }
+};
+
+const handleDoseCriteria = (ctx) => {
+  let dose = 'all';
+  let isAreaSpecific = false;
+  let searchClass = null;
+  let searchValue = null;
+
+  const params = ctx.message.text.split(' ');
+
+  if (params.length < 2) {
+    return ctx.replyWithMarkdown(
+      'To set dose preference, send `/dose <all|1|2>` or `/dose <all|1|2> <PIN|DISTRICT> <pincode|district id>`. Send /help to learn more'
+    );
+  } else {
+    if (params[1].toLowerCase() !== 'all') dose = Number(params[1]);
+  }
+
+  if (dose === null || (dose !== 'all' && Number.isNaN(dose)) || !['all', 1, 2].includes(dose))
+    return ctx.reply('Invalid dose value specified. Valid values are all, 1 and 2');
+
+  if (params.length > 2) {
+    if (params.length < 4)
+      ctx.reply('Need 3 parameters - dose, PIN/DISTRICT and pincode or district ID. Send /help to learn more');
+
+    isAreaSpecific = true;
+    searchClass = String(ctx.message.text).split(' ')[2].toUpperCase();
+    searchValue = String(ctx.message.text).split(' ')[3];
+  }
+
+  if (!isAreaSpecific) {
+    db.setAllDoseCriteria({ telegramId: ctx.chat.id, doseCriteria: dose }).then((updatedRows) => {
+      ctx.reply(`Updated dose criteria for ${updatedRows} area${updatedRows > 1 ? 's' : ''}. Send /status to verify.`);
+    });
+  } else {
+    if (!searchClass || !['PIN', 'DISTRICT'].includes(searchClass)) {
+      ctx.reply('Invalid TYPE - it should either be PIN or DISTRICT');
+    } else if (
+      !searchValue ||
+      Number.isNaN(searchValue) ||
+      (searchClass === 'PIN' && searchValue.length !== 6) ||
+      (searchClass === 'DISTRICT' && !districts[searchValue])
+    ) {
+      ctx.replyWithMarkdown(
+        `Invalid VALUE ${searchValue} received. Area value should be a number. In case of PIN, it should be 6 digit PIN code.
+          In case of district it should be a valid district ID. Send \`/searchdistrict <district name>\` to find the district ID. Send /help to learn more.`
+      );
+    } else {
+      db.setDoseCriteriaByArea({
+        telegramId: ctx.chat.id,
+        doseCriteria: dose,
+        searchClass,
+        searchValue,
+      }).then(() => {
+        ctx.reply(`Updated dose criteria for the provided area. Send /status to verify.`);
+      });
+    }
+  }
+};
+
 const handleStatusShow = (ctx) => {
   db.getAllAreasByUser(ctx.chat.id)
     .then((rows) => {
@@ -232,6 +350,8 @@ const handleStatusShow = (ctx) => {
             area.search_class === 'DISTRICT' ? `(${districts[area.search_value].name})` : ''
           },
           Age criteria: ${area.age_criteria}${Number(area.age_criteria) === 0 ? ' (Both 18+ and 45+)' : '+'},
+          Dose Criteria: ${Number(area.dose_criteria) === 0 ? '(Any dose)' : `Dose ${area.dose_criteria}`},
+          Vaccine Criteria: ${area.vaccine_critera},
           Last checked: ${
             area.last_queried
               ? moment.utc(area.last_queried).tz('Asia/Kolkata').format('DD-MM-YYYY h:mm a').toString()
@@ -275,6 +395,14 @@ const botService = () => {
 
   bot.command(['agelimit', 'ageLimit'], (ctx) => {
     handleAgeCriteria(ctx);
+  });
+
+  bot.command(['vaccine'], (ctx) => {
+    handleVaccineCriteria(ctx);
+  });
+
+  bot.command(['dose'], (ctx) => {
+    handleDoseCriteria(ctx);
   });
 
   bot.command('status', (ctx) => {

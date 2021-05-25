@@ -48,14 +48,7 @@ const fetchSlotDetails = (searchValue, searchClass, date) => {
 };
 
 const skimSlotDetails = (slotData) => {
-  const result = {
-    above45Found: false,
-    above45Slots: {},
-    above45SlotsCount: 0,
-    under45Found: false,
-    under45Slots: {},
-    under45SlotsCount: 0,
-  };
+  const result = [];
 
   return new Promise((resolve, reject) => {
     if (typeof slotData.centers === 'undefined' || !Array.isArray(slotData.centers))
@@ -72,6 +65,8 @@ const skimSlotDetails = (slotData) => {
       if (center.sessions && Array.isArray(center.sessions)) {
         center.sessions.forEach((session) => {
           const availableCapacity = session.available_capacity;
+          const dose1Capacity = session.available_capacity_dose1;
+          const dose2Capacity = session.available_capacity_dose2;
           const date = session.date;
           const minAge = session.min_age_limit;
           const vaccine = session.vaccine;
@@ -81,25 +76,13 @@ const skimSlotDetails = (slotData) => {
               centerDetails,
               date,
               availableCapacity,
+              dose1Capacity,
+              dose2Capacity,
               minAge,
               vaccine,
             };
 
-            if (minAge < 45) {
-              result.under45Found = true;
-              result.under45SlotsCount += 1;
-
-              // if date key doesn't exist, create it
-              if (!result.under45Slots[date]) result.under45Slots[date] = [];
-              result.under45Slots[date].push(slotData);
-            } else {
-              result.above45Found = true;
-              result.above45SlotsCount += 1;
-
-              // if date key doesn't exist, create it
-              if (!result.above45Slots[date]) result.above45Slots[date] = [];
-              result.above45Slots[date].push(slotData);
-            }
+            result.push(slotData);
           }
         });
       }
@@ -109,22 +92,31 @@ const skimSlotDetails = (slotData) => {
   });
 };
 
-const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) => {
+const sendSlotNotification = async ({ item, vaccine, age, dose, slots }) => {
   try {
     const tgReceipients = await db.getNotificationReceipients({
       searchClass: item.search_class,
       searchValue: item.search_value,
-      ageCriteria,
+      ageCriteria: age,
+      vaccineCriteria: String(vaccine).toUpperCase(),
+      doseCriteria: dose,
     });
 
-    const msgHeader = `Found available vaccine slots for age <strong>${ageCriteria}</strong> and area type <strong>${
+    const msgHeader = `Found available vaccine slots for age <strong>${ageCriteria}+</strong>, area type <strong>${
       item.search_class
     } - ${item.search_value}${
       item.search_class === 'DISTRICT' ? `(${districts[item.search_value].name})` : ''
-    }</strong>,\n`;
+    }</strong>, vaccine: <strong>${vaccine}</strong> and dose: <strong>Dose ${dose}</strong>,\n`;
     const msgFooter = '\nSend /pause to pause further notifications';
-    const dates = Object.keys(slots).sort(); // ['03-01-2021', '10-01-2021', ...]
+
     const slotsByDates = {}; // { '03-01-2021': [{}, {}], ... }
+    for (const slot of slots) {
+      const slotDate = slot.date;
+      if (!slotsByDates[slotDate]) slotsByDates[slotDate] = [];
+
+      slotsByDates[slotDate].push(slot);
+    }
+    const dates = Object.keys(slotsByDates).sort(); // ['03-01-2021', '10-01-2021', ...]
 
     for (const date of dates) {
       const slotText = [];
@@ -133,8 +125,7 @@ const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) =>
         slotText.push(`       Center: ${slot.centerDetails.centerName}
          Fee: ${slot.centerDetails.feeType || ''}
          PINCODE: ${slot.centerDetails.pincode}
-         Min. age: ${slot.minAge}
-         Capacity: ${slot.availableCapacity}${slot.vaccine ? `\n         Vaccine: ${slot.vaccine}` : ''}
+         Capacity: ${slot.availableCapacity}
     --------------------`);
       }
 
@@ -145,10 +136,10 @@ const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) =>
     let msgContent = msgHeader;
     let showLimited = false;
     let maxSlotsPerDay = 10;
-    if (totalSlotCount > 70) {
+    if (slots.length > 70) {
       showLimited = true;
       maxSlotsPerDay = 3;
-      msgContent += `\nYou have <strong>${totalSlotCount}</strong> slots for next 14 days. We are showing only first three centers for each day. Please visit cowin.gov.in to see all the slots or use PINCODE instead of entire district. We can not show so many results.\n`;
+      msgContent += `\nYou have <strong>${slots.length}</strong> slots for next 14 days. We are showing only first three centers for each day. Please visit cowin.gov.in to see all the slots or use PINCODE instead of entire district. We can not show so many results.\n`;
     }
 
     let chunks = [];
@@ -236,6 +227,18 @@ const sendSlotNotification = async (item, slots, ageCriteria, totalSlotCount) =>
   }
 };
 
+const dispatchSlotNotifications = (item, allSlots) => {
+  sendSlotNotification({ item, vaccine: 'covaxin', age: 18, dose: 1, slots: allSlots.covaxin18PlusDose1 });
+  sendSlotNotification({ item, vaccine: 'covaxin', age: 18, dose: 2, slots: allSlots.covaxin18PlusDose2 });
+  sendSlotNotification({ item, vaccine: 'covaxin', age: 45, dose: 1, slots: allSlots.covaxin45PlusDose1 });
+  sendSlotNotification({ item, vaccine: 'covaxin', age: 45, dose: 2, slots: allSlots.covaxin45PlusDose2 });
+
+  sendSlotNotification({ item, vaccine: 'covishield', age: 18, dose: 1, slots: allSlots.covieshield18PlusDose1 });
+  sendSlotNotification({ item, vaccine: 'covishield', age: 18, dose: 2, slots: allSlots.covieshield18PlusDose2 });
+  sendSlotNotification({ item, vaccine: 'covishield', age: 45, dose: 1, slots: allSlots.covieshield45PlusDose1 });
+  sendSlotNotification({ item, vaccine: 'covishield', age: 45, dose: 2, slots: allSlots.covieshield45PlusDose2 });
+};
+
 const fetchCenterData = (items, date) => {
   return new Promise(async (resolve) => {
     for (const item of items) {
@@ -252,16 +255,42 @@ const fetchCenterData = (items, date) => {
 
         skimSlotDetails(data)
           .then((result) => {
-            if (result.above45Found || result.under45Found)
-              console.info(
-                `Found some slots (Under 45: ${result.under45SlotsCount}, Above 45: ${
-                  result.above45SlotsCount
-                }) for  item ${JSON.stringify(item)} for date ${date}`
-              );
-            else console.info(`No slots found`);
+            let slots = {
+              covaxin18PlusDose1: [],
+              covaxin18PlusDose2: [],
+              covaxin45PlusDose1: [],
+              covaxin45PlusDose2: [],
 
-            if (result.above45Found) sendSlotNotification(item, result.above45Slots, 45, result.above45SlotsCount);
-            if (result.under45Found) sendSlotNotification(item, result.under45Slots, 18, result.under45SlotsCount);
+              covieshield18PlusDose1: [],
+              covieshield18PlusDose2: [],
+              covieshield45PlusDose1: [],
+              covieshield45PlusDose2: [],
+            };
+
+            if (result.length) {
+              for (const slot of result) {
+                const dataKeyPrefix = `${String(slot.vaccine).trim().toLowerCase()}${slot.minAge}Plus`;
+                if (slot.dose1Capacity) {
+                  slots[`${dataKeyPrefix}Dose1`].push({
+                    ...slot,
+                    selectedCapacity: slot.dose1Capacity,
+                  });
+                }
+
+                if (slot.dose2Capacity) {
+                  slots[`${dataKeyPrefix}Dose2`].push({
+                    ...slot,
+                    selectedCapacity: slot.dose2Capacity,
+                  });
+                }
+              }
+
+              console.log(
+                `Found some slots for item ${JSON.stringify(item)} for date ${date}:\n${JSON.stringify(slots)}`
+              );
+
+              dispatchSlotNotifications(item, slots);
+            } else console.info(`No slots found for item ${JSON.stringify(item)} for date ${date}`);
           })
           .catch((err) => {
             console.error(`Error occured while skimming details for ${JSON.stringify(item)} : ${err}`);

@@ -49,14 +49,16 @@ const getAllActiveUsers = () => {
 const addArea = ({ telegramId, telegramUsername, searchClass, searchValue }) => {
   return new Promise((resolve, reject) => {
     db.run(
-      `INSERT INTO users(telegram_id, telegram_username, search_class, search_value, age_criteria)
-      VALUES($telegram_id, $telegram_username, $search_class, $search_value, $age_criteria)`,
+      `INSERT INTO users(telegram_id, telegram_username, search_class, search_value, age_criteria, vaccine_criteria, dose_criteria)
+      VALUES($telegram_id, $telegram_username, $search_class, $search_value, $age_criteria, $vaccine_criteria, $dose_criteria)`,
       {
         $telegram_id: telegramId,
         $telegram_username: telegramUsername,
         $search_class: searchClass,
         $search_value: searchValue,
         $age_criteria: 18, // by default 18-44 vaccination slots
+        $vaccine_criteria: 'all', // by default all vaccines
+        $dose_criteria: 0, // by default any dose
       },
       function (err) {
         if (err) return reject(err);
@@ -123,6 +125,47 @@ const setAllAgeCriteria = ({ telegramId, ageCriteria }) => {
   });
 };
 
+const setAllvaccineCriteria = ({ telegramId, vaccineCriteria }) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE users
+      SET vaccine_criteria = $vaccine_criteria
+      
+      WHERE telegram_id = $telegram_id`,
+      {
+        $telegram_id: telegramId,
+        $vaccine_criteria: vaccineCriteria,
+      },
+      function (err) {
+        if (err) return reject(err);
+        return resolve(this.changes);
+      }
+    );
+  });
+};
+
+const setAllDoseCriteria = ({ telegramId, doseCriteria }) => {
+  let doseValue = doseCriteria;
+  if (doseCriteria === 'all') doseValue = 0;
+
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE users
+      SET dose_criteria = $dose_criteria
+      
+      WHERE telegram_id = $telegram_id`,
+      {
+        $telegram_id: telegramId,
+        $dose_criteria: doseValue,
+      },
+      function (err) {
+        if (err) return reject(err);
+        return resolve(this.changes);
+      }
+    );
+  });
+};
+
 const setAgeCriteriaByArea = ({ telegramId, ageCriteria, searchClass, searchValue }) => {
   let ageValue = ageCriteria;
   if (ageCriteria === 'all') ageValue = 0;
@@ -138,6 +181,55 @@ const setAgeCriteriaByArea = ({ telegramId, ageCriteria, searchClass, searchValu
       {
         $telegram_id: telegramId,
         $age_criteria: ageValue,
+        $search_class: searchClass,
+        $search_value: searchValue,
+      },
+      function (err) {
+        if (err) return reject(err);
+        return resolve(this.changes);
+      }
+    );
+  });
+};
+
+const setVaccineCriteriaByArea = ({ telegramId, vaccineCriteria, searchClass, searchValue }) => {
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE users
+      SET vaccine_criteria = $vaccine_criteria
+      
+      WHERE telegram_id = $telegram_id
+      AND search_class = $search_class
+      AND search_value = $search_value`,
+      {
+        $telegram_id: telegramId,
+        $vaccine_criteria: vaccineCriteria,
+        $search_class: searchClass,
+        $search_value: searchValue,
+      },
+      function (err) {
+        if (err) return reject(err);
+        return resolve(this.changes);
+      }
+    );
+  });
+};
+
+const setDoseCriteriaByArea = ({ telegramId, doseCriteria, searchClass, searchValue }) => {
+  let doseValue = doseCriteria;
+  if (doseCriteria === 'all') doseValue = 0;
+
+  return new Promise((resolve, reject) => {
+    db.run(
+      `UPDATE users
+      SET dose_criteria = $dose_criteria
+      
+      WHERE telegram_id = $telegram_id
+      AND search_class = $search_class
+      AND search_value = $search_value`,
+      {
+        $telegram_id: telegramId,
+        $dose_criteria: doseValue,
         $search_class: searchClass,
         $search_value: searchValue,
       },
@@ -238,7 +330,7 @@ const updateQueryStatus = ({ searchClass, searchValue }) => {
   });
 };
 
-const getNotificationReceipients = ({ searchClass, searchValue, ageCriteria }) => {
+const getNotificationReceipients = ({ searchClass, searchValue, ageCriteria, vaccineCriteria, doseCriteria }) => {
   return new Promise((resolve, reject) => {
     db.all(
       `
@@ -247,12 +339,16 @@ const getNotificationReceipients = ({ searchClass, searchValue, ageCriteria }) =
     AND search_value = $search_value
     AND age_criteria IS NOT NULL
     AND (age_criteria = 0 OR age_criteria = $age_criteria)
+    AND (vaccine_criteria = 'all' OR vaccine_criteria = $vaccine_criteria)
+    AND (dose_criteria = 0 OR dose_criteria = $dose_criteria)
     AND active = 1
     `,
       {
         $search_class: searchClass,
         $search_value: searchValue,
         $age_criteria: ageCriteria,
+        $vaccine_criteria: vaccineCriteria,
+        $dose_criteria: doseCriteria,
       },
       (err, results) => {
         if (err) return reject(err);
@@ -291,7 +387,11 @@ module.exports.addArea = addArea;
 module.exports.getAddedAreaCount = getAddedAreaCount;
 module.exports.removeArea = removeArea;
 module.exports.setAllAgeCriteria = setAllAgeCriteria;
+module.exports.setAllvaccineCriteria = setAllvaccineCriteria;
+module.exports.setAllDoseCriteria = setAllDoseCriteria;
 module.exports.setAgeCriteriaByArea = setAgeCriteriaByArea;
+module.exports.setVaccineCriteriaByArea = setVaccineCriteriaByArea;
+module.exports.setDoseCriteriaByArea = setDoseCriteriaByArea;
 module.exports.setSubscriptionStatus = setSubscriptionStatus;
 module.exports.getDistinctActiveItemsBySearchClass = getDistinctActiveItemsBySearchClass;
 module.exports.incrementFailureCount = incrementFailureCount;
