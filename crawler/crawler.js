@@ -93,6 +93,7 @@ const skimSlotDetails = (slotData) => {
 };
 
 const sendSlotNotification = async ({ item, vaccine, age, dose, slots }) => {
+  if (!slots.length) return null;
   try {
     const tgReceipients = await db.getNotificationReceipients({
       searchClass: item.search_class,
