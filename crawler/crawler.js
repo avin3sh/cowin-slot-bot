@@ -106,7 +106,7 @@ const sendSlotNotification = async ({ item, vaccine, age, dose, slots }) => {
       item.search_class
     } - ${item.search_value}${
       item.search_class === 'DISTRICT' ? `(${districts[item.search_value].name})` : ''
-    }</strong>, vaccine: <strong>${vaccine}</strong> and dose: <strong>Dose ${dose}</strong>,\n`;
+    }</strong>, vaccine: <strong>${String(vaccine).toUpperCase()}</strong> and dose: <strong>Dose ${dose}</strong>,\n`;
     const msgFooter = '\nSend /pause to pause further notifications';
 
     const slotsByDates = {}; // { '03-01-2021': [{}, {}], ... }
@@ -121,7 +121,7 @@ const sendSlotNotification = async ({ item, vaccine, age, dose, slots }) => {
     for (const date of dates) {
       const slotText = [];
 
-      for (const slot of slots[date]) {
+      for (const slot of slotsByDates[date]) {
         slotText.push(`       Center: ${slot.centerDetails.centerName}
          Fee: ${slot.centerDetails.feeType || ''}
          PINCODE: ${slot.centerDetails.pincode}
