@@ -102,7 +102,7 @@ const sendSlotNotification = async ({ item, vaccine, age, dose, slots }) => {
       doseCriteria: dose,
     });
 
-    const msgHeader = `Found available vaccine slots for age <strong>${ageCriteria}+</strong>, area type <strong>${
+    const msgHeader = `Found available vaccine slots for age <strong>${age}+</strong>, area type <strong>${
       item.search_class
     } - ${item.search_value}${
       item.search_class === 'DISTRICT' ? `(${districts[item.search_value].name})` : ''
