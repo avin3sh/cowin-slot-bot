@@ -233,10 +233,10 @@ const dispatchSlotNotifications = (item, allSlots) => {
   sendSlotNotification({ item, vaccine: 'covaxin', age: 45, dose: 1, slots: allSlots.covaxin45PlusDose1 });
   sendSlotNotification({ item, vaccine: 'covaxin', age: 45, dose: 2, slots: allSlots.covaxin45PlusDose2 });
 
-  sendSlotNotification({ item, vaccine: 'covishield', age: 18, dose: 1, slots: allSlots.covieshield18PlusDose1 });
-  sendSlotNotification({ item, vaccine: 'covishield', age: 18, dose: 2, slots: allSlots.covieshield18PlusDose2 });
-  sendSlotNotification({ item, vaccine: 'covishield', age: 45, dose: 1, slots: allSlots.covieshield45PlusDose1 });
-  sendSlotNotification({ item, vaccine: 'covishield', age: 45, dose: 2, slots: allSlots.covieshield45PlusDose2 });
+  sendSlotNotification({ item, vaccine: 'covishield', age: 18, dose: 1, slots: allSlots.covishield18PlusDose1 });
+  sendSlotNotification({ item, vaccine: 'covishield', age: 18, dose: 2, slots: allSlots.covishield18PlusDose2 });
+  sendSlotNotification({ item, vaccine: 'covishield', age: 45, dose: 1, slots: allSlots.covishield45PlusDose1 });
+  sendSlotNotification({ item, vaccine: 'covishield', age: 45, dose: 2, slots: allSlots.covishield45PlusDose2 });
 };
 
 const fetchCenterData = (items, date) => {
@@ -261,10 +261,10 @@ const fetchCenterData = (items, date) => {
               covaxin45PlusDose1: [],
               covaxin45PlusDose2: [],
 
-              covieshield18PlusDose1: [],
-              covieshield18PlusDose2: [],
-              covieshield45PlusDose1: [],
-              covieshield45PlusDose2: [],
+              covishield18PlusDose1: [],
+              covishield18PlusDose2: [],
+              covishield45PlusDose1: [],
+              covishield45PlusDose2: [],
             };
 
             if (result.length) {
