@@ -351,7 +351,7 @@ const handleStatusShow = (ctx) => {
           },
           Age criteria: ${area.age_criteria}${Number(area.age_criteria) === 0 ? ' (Both 18+ and 45+)' : '+'},
           Dose Criteria: ${Number(area.dose_criteria) === 0 ? '(Any dose)' : `Dose ${area.dose_criteria}`},
-          Vaccine Criteria: ${area.vaccine_critera},
+          Vaccine Criteria: ${area.vaccine_criteria},
           Last checked: ${
             area.last_queried
               ? moment.utc(area.last_queried).tz('Asia/Kolkata').format('DD-MM-YYYY h:mm a').toString()
