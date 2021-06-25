@@ -33,12 +33,18 @@ To verify your details that you have registered with me, send /status.
 *Specify Vaccine Preference *
 Send \`/vaccine all\` if you prefer any vaccine. Send \`/vaccine COVAXIN\` if you are looking for Covaxin slots. Send \`/vaccine COVISHIELD\` if you are looking for Covishield slots.
 
-You can also set different preference for different area. For example, if you want to set Covaxin only for district ID 11 then send \`/vaccine COVAXIN DISTRICT 11\`. Similarly if you want to do it for some pincode 110011 then send \`/vaccine COVAXIN PIN 110011\`
+You can also set preference for specific area,
+if you want to set Covaxin only for district ID "192" then send \`/vaccine COVAXIN DISTRICT 192\`
+Similarly if you want to specify for a pincode "110011" then send \`/vaccine COVAXIN PIN 110011\`
 
 *Specify dose preference *
-Send \`/dose all\` if you prefer any dose (1 or 2). Send \`/dose 1\` if you are looking for dose-1 slots. Send \`/dose 2\` if you are looking for dose-2 slots.
+Send \`/dose all\` if you prefer any dose (1 or 2).
+Send \`/dose 1\` if you are looking for dose-1 slots.
+Send \`/dose 2\` if you are looking for dose-2 slots.
 
-You can also set different dose preference for different area. For example, if you want to set dose-2 only for district ID 11 then send \`/dose 2 DISTRICT 11\`. Similarly if you want to do it for some pincode 110011 then send \/dose 2 PIN 110011\`
+You can also set preference for specific area,
+if you want to set dose-2 only for district ID "192" then send \`/dose 2 DISTRICT 192\`
+Similarly if you want to do it for some pincode "110011" then send \`/dose 2 PIN 110011\`
 
 *Removing an area that you added *
 if you want to remove an area that you added earlier, send \`/removearea <PIN|DISTRICT> <pincode|district id>\`
