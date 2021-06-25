@@ -22,11 +22,23 @@ You can also ask me to monitor entire district, for that send \`/addarea DISTRIC
 
 if you want to be notified for just 18-44 vaccination slots then send \`/agelimit 18\`. If you want to be notified for 45+ vaccination slots, send \`/agelimit 45\`. If you want to be notified for both 18+ and 45+ vaccinations, send \`/agelimit all\`
 
+By default I only search for Dose-1 slots. If you want to specify Dose (1 or 2) and Vaccine (Covaxin, Covishield) preference, continue reading.
+
 *Adding multiple areas *
 You can follow above two steps to add multiple areas for me to monitor. If you want to specify different age limit for different area, send \`/agelimit <all|18|45> <PIN|DISTRICT> <pincode|district id>\` where \`<pincode|district id>\` is pincode or district ID of area for which you want to specify the age limit. For example if you had added an area like \`/addarea PIN 560013\` and want to set age limit of 45+ for this area, then you should send \`/agelimit 45 PIN 560013\`.
 
 *Verifying your status *
 To verify your details that you have registered with me, send /status.
+
+*Specify Vaccine Preference *
+Send \`/vaccine all\` if you prefer any vaccine. Send \`/vaccine COVAXIN\` if you are looking for Covaxin slots. Send \`/vaccine COVISHIELD\` if you are looking for Covishield slots.
+
+You can also set different preference for different area. For example, if you want to set Covaxin only for district ID 11 then send \`/vaccine COVAXIN DISTRICT 11\`. Similarly if you want to do it for some pincode 110011 then send \/vaccine COVAXIN PIN 110011\`
+
+*Specify dose preference *
+Send \`/dose all\` if you prefer any dose (1 or 2). Send \`/dose 1\` if you are looking for dose-1 slots. Send \`/dose 2\` if you are looking for dose-2 slots.
+
+You can also set different dose preference for different area. For example, if you want to set dose-2 only for district ID 11 then send \`/dose 2 DISTRICT 11\`. Similarly if you want to do it for some pincode 110011 then send \/dose 2 PIN 110011\`
 
 *Removing an area that you added *
 if you want to remove an area that you added earlier, send \`/removearea <PIN|DISTRICT> <pincode|district id>\`
