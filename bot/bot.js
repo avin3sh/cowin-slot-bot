@@ -120,7 +120,7 @@ const handleAddArea = async (ctx) => {
     })
       .then(() => {
         ctx.reply(
-          `Successfully added the area. Send /status to verify. Note: Default age criteria is 18-44. Use /agelimit to update age criteria for this area`
+          `Successfully added the area. Send /status to verify. Note: Default age criteria is 18-44. Use /agelimit to update age criteria for this area. Default dose criteria is "any dose" and default vaccine criteria is "any vaccine". Send \`/help\` to learn how to specify dose and vaccine preference.`
         );
       })
       .catch((err) => {
